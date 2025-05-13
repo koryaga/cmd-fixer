@@ -1,10 +1,19 @@
 #!/usr/bin/env bash
+# fixes incorrect shell commands using LLM model and put them back to history
+
+# Usage: 
+# 1. have running ollama server
+# 2. configure LLM_MODEL to be used. export LLM_MODEL="gemma3" # or any other model
+# 3. source this script
+
 #TODO need call in async manner request to controller.py getting kind of job id
 #TODO to avoid extra AI generated code
 #TODO add error code to the prompt
+#TODO make more sophisticated prompt
 # shellcheck disable=SC2155
 
-HIST_LEN=10
+HIST_LEN="${HIST_LEN:-10}"
+export LLM_MODEL="${LLM_MODEL:-gemma3}"
 
 check_command_result() {
     # Get the exit status of the last command. Always first command !!!!
@@ -56,8 +65,9 @@ send_command() {
     local json_payload=$(jq -n \
         --arg system "$system_prompt" \
         --arg prompt "$command" \
+        --arg model "$LLM_MODEL" \
         '{
-            model: "gemma3",
+            model: $model,
             messages: [
                 {"role": "system", "content": $system},
                 {"role": "user", "content": $prompt}
