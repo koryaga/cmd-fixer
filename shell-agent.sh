@@ -1,19 +1,17 @@
 #!/usr/bin/env bash
 # fixes incorrect shell commands using LLM model and put them back to history
 
-# Usage: 
-# 1. have running ollama server
-# 2. configure LLM_MODEL to be used. export LLM_MODEL="gemma3" # or any other model
-# 3. source this script
-
 #TODO need call in async manner request to controller.py getting kind of job id
 #TODO to avoid extra AI generated code
 #TODO add error code to the prompt
-#TODO make more sophisticated prompt
+#TODO make more sophisticated prompt using environment 
 # shellcheck disable=SC2155
 
-HIST_LEN="${HIST_LEN:-10}"
-export LLM_MODEL="${LLM_MODEL:-gemma3}"
+OPENAI_API_KEY=TOKEN
+LLM_MODEL="${LLM_MODEL:-gemma3:12b}" #gpt-4.1-mini
+LLM_URL="${LLM_URL:-"localhost:11434"}" #ollama by default , https://api.openai.com
+HIST_LEN="${HIST_LEN:-1}" #by default use only current failed command to correct
+
 
 check_command_result() {
     # Get the exit status of the last command. Always first command !!!!
@@ -43,7 +41,7 @@ You are a shell command fixer. Your only task is to correct shell commands that 
     Exit code 2: syntax or misuse error
 Rules:
     Take a number of shell commands as input. Correct last command that cause exit code 127 or 2.
-    Also use  the previous commands as context.
+    Also use  the previous commands as context if NOT POSSIBLE to correct.
     Do not improve formatting, style, or performance.
     Do not optimize or alter the command unless it directly addresses one of the above errors.
 Context:
@@ -58,7 +56,6 @@ EOF
 
 send_command() {
     local command=$1
-    #https://api.openai.com/v1/chat/completions 
 
     # Generate JSON payload using jq for Ollama API
     # shellcheck disable=SC2155
@@ -75,7 +72,7 @@ send_command() {
         }')
 
     # Send the POST request to Ollama API
-    response=$(curl -s -X POST http://localhost:11434/v1/chat/completions \
+    response=$(curl -s -X POST "${LLM_URL}"/v1/chat/completions \
         -H "Content-Type: application/json" \
         -H "Authorization: Bearer $OPENAI_API_KEY" \
         -d "$json_payload" | jq -r '.choices[0].message.content')
