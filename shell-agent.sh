@@ -8,7 +8,7 @@
 # shellcheck disable=SC2155
 
 OPENAI_API_KEY=TOKEN
-LLM_MODEL="${LLM_MODEL:-gemma3:12b}" #gpt-4.1-mini
+LLM_MODEL="${LLM_MODEL:-"gemma3:12b"}" #gpt-4.1-mini
 LLM_URL="${LLM_URL:-"localhost:11434"}" #ollama by default , https://api.openai.com
 HIST_LEN="${HIST_LEN:-1}" #by default use only current failed command to correct
 
@@ -27,7 +27,8 @@ check_command_result() {
     { [ "$exit_status" -eq 127 ] || [ "$exit_status" -eq 2 ];}; then
         local err_comm=$(history "${HIST_LEN}" | cut -d' ' -f4-)
         [ "$DEBUG" ] && echo "Error in syntax ${exit_status}"
-        history -s "$(send_command  "${err_comm}")   #AI corrected"
+        #send command to LLM , get the response and append it to the history
+        history -s "$(send_command  "${err_comm}")   #LLM corrected"
         
     fi
     HISTCMD_previous=$current_histcmd
@@ -44,8 +45,9 @@ Rules:
     Also use  the previous commands as context if NOT POSSIBLE to correct.
     Do not improve formatting, style, or performance.
     Do not optimize or alter the command unless it directly addresses one of the above errors.
+    Some commmands may be enter in a wrong keyboard layout.
 Context:
-    Assume the command is for bash macOS.
+    Assume the command is for bash "$(bash --version|head -n1)".
 Output:
     Respond only with the corrected last command.
     Do not change the command in case no issues are found.
