@@ -7,11 +7,12 @@
 #TODO make more sophisticated prompt using environment 
 # shellcheck disable=SC2155
 
-OPENAI_API_KEY=TOKEN
-LLM_MODEL="${LLM_MODEL:-"gemma3:12b"}" #gpt-4.1-mini
-LLM_URL="${LLM_URL:-"localhost:11434"}" #ollama by default , https://api.openai.com
+OPENAI_API_KEY=${OPENAI_API_KEY:-"TOKEN"} 
+LLM_MODEL="${LLM_MODEL:-"gemma3"}" #gpt-4.1-mini
+LLM_URL="${LLM_URL:-"http://localhost:11434/v1/chat/completions"}" #ollama by default , https://api.openai.com/v1/chat/completions
 HIST_LEN="${HIST_LEN:-1}" #by default use only current failed command to correct
 
+HISTCMD_previous=0
 
 check_command_result() {
     # Get the exit status of the last command. Always first command !!!!
@@ -74,7 +75,7 @@ send_command() {
         }')
 
     # Send the POST request to Ollama API
-    response=$(curl -s -X POST "${LLM_URL}"/v1/chat/completions \
+    response=$(curl -s -X POST "${LLM_URL}" \
         -H "Content-Type: application/json" \
         -H "Authorization: Bearer $OPENAI_API_KEY" \
         -d "$json_payload" | jq -r '.choices[0].message.content')

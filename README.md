@@ -7,18 +7,21 @@ A shell agent that automatically detects incorrect shell commands (exit code 127
 1. **Set your LLM API:**
 
     For OpenAI:
+
     ```bash
     export OPENAI_API_KEY=your_openai_api_key
-    export LLM_MODEL=gpt-4
-    export LLM_URL="https://api.openai.com"
+    export LLM_MODEL=gpt-4.1-mini
+    export LLM_URL="https://api.openai.com/v1/chat/completions"
     ```
 
-    For Ollama:
+    For Ollama (used by default):
+
     ```bash
-    export LLM_MODEL=llama2
-    export LLM_URL="http://localhost:11434"
-    # Ollama must be running locally
+    export LLM_MODEL=gemma3
+    export LLM_URL="http://localhost:11434/v1/chat/completions"
+    # Ollama must be running locally with respective LLM model installed
     ```
+
 1. **Source the agent in your shell:**
 
     ```bash
