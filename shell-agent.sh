@@ -10,7 +10,7 @@
 OPENAI_API_KEY=${OPENAI_API_KEY:-"TOKEN"} 
 LLM_MODEL="${LLM_MODEL:-"gemma3"}" #gpt-4.1-mini
 LLM_URL="${LLM_URL:-"http://localhost:11434/v1/chat/completions"}" #ollama by default , https://api.openai.com/v1/chat/completions
-HIST_LEN="${HIST_LEN:-1}" #by default use only current failed command to correct
+HIST_LEN="${HIST_LEN:-5}" #by default use 5 last commands as a context
 
 HISTCMD_previous=0
 
@@ -26,8 +26,7 @@ check_command_result() {
     # Check if the exit status indicates a syntax error
     if [ "$current_histcmd" -ne "$HISTCMD_previous" ] && \
     { [ "$exit_status" -eq 127 ] || [ "$exit_status" -eq 2 ];}; then
-        local err_comm=$(history "${HIST_LEN}" | cut -d' ' -f4-) # TODO rework since subshell history is used.
-
+        local err_comm=$(history "${HIST_LEN}" | sed 's/ *[0-9]* *//')
         [ "$DEBUG" ] && echo "Error in syntax ${exit_status} ${err_comm}"
         #send command to LLM , get the response and append it to the history
         history -s "$(send_command  "${err_comm}")   #LLM corrected"
@@ -43,8 +42,8 @@ You are a shell command fixer. Your only task is to correct shell commands that 
     Exit code 127: command not found
     Exit code 2: syntax or misuse error
 Rules:
-    Take a number of shell commands as input. Correct last command that cause exit code 127 or 2.
-    Also use  the previous commands as context if NOT POSSIBLE to correct.
+    Take a number of shell commands as input delimeted with '\n' on single. Correct the last command that cause exit code 127 or 2.
+    Also use the previous commands as context if NOT POSSIBLE to correct.
     Do not improve formatting, style, or performance.
     Do not optimize or alter the command unless it directly addresses one of the above errors.
     Some commmands may be enter in a wrong keyboard layout.
@@ -60,7 +59,7 @@ EOF
 
 send_command() {
     local command=$1
-
+    
     # Generate JSON payload using jq for Ollama API
     # shellcheck disable=SC2155
     local json_payload=$(jq -n \
@@ -74,13 +73,11 @@ send_command() {
                 {"role": "user", "content": $prompt}
             ]
         }')
-
     # Send the POST request to Ollama API
     response=$(curl -s ${DEBUG:+"-v"} -X POST "${LLM_URL}" \
         -H "Content-Type: application/json" \
         -H "Authorization: Bearer $OPENAI_API_KEY" \
         -d "$json_payload" | jq -r '.choices[0].message.content')
-
     echo "$response"
 }
 
