@@ -26,8 +26,9 @@ check_command_result() {
     # Check if the exit status indicates a syntax error
     if [ "$current_histcmd" -ne "$HISTCMD_previous" ] && \
     { [ "$exit_status" -eq 127 ] || [ "$exit_status" -eq 2 ];}; then
-        local err_comm=$(history "${HIST_LEN}" | cut -d' ' -f4-)
-        [ "$DEBUG" ] && echo "Error in syntax ${exit_status}"
+        local err_comm=$(history "${HIST_LEN}" | cut -d' ' -f4-) # TODO rework since subshell history is used.
+
+        [ "$DEBUG" ] && echo "Error in syntax ${exit_status} ${err_comm}"
         #send command to LLM , get the response and append it to the history
         history -s "$(send_command  "${err_comm}")   #LLM corrected"
         
@@ -75,7 +76,7 @@ send_command() {
         }')
 
     # Send the POST request to Ollama API
-    response=$(curl -s -X POST "${LLM_URL}" \
+    response=$(curl -s ${DEBUG:+"-v"} -X POST "${LLM_URL}" \
         -H "Content-Type: application/json" \
         -H "Authorization: Bearer $OPENAI_API_KEY" \
         -d "$json_payload" | jq -r '.choices[0].message.content')
