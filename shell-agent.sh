@@ -29,7 +29,7 @@ check_command_result() {
         local err_comm=$(history "${HIST_LEN}" | sed 's/ *[0-9]* *//')
         [ "$DEBUG" ] && echo "Error in syntax ${exit_status} ${err_comm}"
         #send command to LLM , get the response and append it to the history
-        history -s "$(send_command  "${err_comm}")   #LLM corrected"
+        history -s "$(send_command  "${err_comm}" ${exit_status}) #"  # comment as a sign that command was corrected 
         
     fi
     HISTCMD_previous=$current_histcmd
@@ -39,18 +39,19 @@ check_command_result() {
 #system prompt for the AI model
 export system_prompt=$(cat <<EOF
 You are a shell command fixer. Your only task is to correct shell commands that fail with: 
-    Exit code 127: command not found
-    Exit code 2: syntax or misuse error
+    Exit code "${exit_status}".
 Rules:
-    Take a number of shell commands as input delimeted with '\n' on single. Correct the last command that cause exit code 127 or 2.
+    Take a number of shell commands as input delimeted with '\n' or single. 
+    Correct the last command that cause exit code "${exit_status}".
     Also use the previous commands as context if NOT POSSIBLE to correct.
     Do not improve formatting, style, or performance.
     Do not optimize or alter the command unless it directly addresses one of the above errors.
-    Some commmands may be enter in a wrong keyboard layout.
+    Command may be enter in a WRONG KEYBOARD LAYOUT, also correct if that is the case.
 Context:
     Assume the command is for bash "$(bash --version|head -n1)".
 Output:
     Respond only with the corrected last command.
+    Validate the command and ensure it is correct
     Do not change the command in case no issues are found.
     No extra text, no explanation, no formatting.
 EOF
@@ -59,6 +60,7 @@ EOF
 
 send_command() {
     local command=$1
+    local exit_status=$2
     
     # Generate JSON payload using jq for Ollama API
     # shellcheck disable=SC2155
@@ -73,6 +75,7 @@ send_command() {
                 {"role": "user", "content": $prompt}
             ]
         }')
+    [ "$DEBUG" ] && echo "$json_payload" >&2
     # Send the POST request to Ollama API
     response=$(curl -s ${DEBUG:+"-v"} -X POST "${LLM_URL}" \
         -H "Content-Type: application/json" \
