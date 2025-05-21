@@ -35,5 +35,5 @@ A shell agent that automatically detects incorrect shell commands (exit code `12
     $ sl
     bash: command not found: sl
     $ <Up Arrow>
-    ls #AI corrected
+    ls #
     ```
