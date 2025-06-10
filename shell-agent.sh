@@ -1,10 +1,8 @@
 #!/usr/bin/env bash
 # fixes incorrect shell commands using LLM model and put them back to history
 
-#TODO need call in async manner request to controller.py getting kind of job id
-#TODO to avoid extra AI generated code
-#TODO add error code to the prompt
-#TODO make more sophisticated prompt using environment 
+#TODO make more sophisticated prompt, to avoid extra AI generated code
+#TODO need call in async manner request to controller.py getting kind of job id ???
 # shellcheck disable=SC2155
 
 OPENAI_API_KEY=${OPENAI_API_KEY:-"TOKEN"} 
