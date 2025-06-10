@@ -9,16 +9,16 @@ A shell agent that automatically detects incorrect shell commands (exit code `12
     For OpenAI:
 
     ```bash
-    export OPENAI_API_KEY=your_openai_api_key
     export LLM_MODEL=gpt-4.1-mini
-    export LLM_URL="https://api.openai.com/v1/chat/completions"
+    export OPENAI_API_KEY=your_openai_api_key
+    export OPENAI_API_BASE="https://api.openai.com/v1/chat/completions"
     ```
 
     For Ollama (used by default):
 
     ```bash
     export LLM_MODEL=gemma3
-    export LLM_URL="http://localhost:11434/v1/chat/completions"
+    export OPENAI_API_BASE="http://localhost:11434/v1/chat/completions"
     # Ollama must be running locally with respective LLM model installed
     ```
 

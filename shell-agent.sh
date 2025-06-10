@@ -9,7 +9,7 @@
 
 OPENAI_API_KEY=${OPENAI_API_KEY:-"TOKEN"} 
 LLM_MODEL="${LLM_MODEL:-"gemma3"}" #gpt-4.1-mini
-LLM_URL="${LLM_URL:-"http://localhost:11434/v1/chat/completions"}" #ollama by default , https://api.openai.com/v1/chat/completions
+OPENAI_API_BASE="${OPENAI_API_BASE:-"http://localhost:11434/v1/chat/completions"}" #ollama by default , https://api.openai.com/v1/chat/completions
 HIST_LEN="${HIST_LEN:-5}" #by default use 5 last commands as a context
 
 HISTCMD_previous=0
@@ -62,7 +62,7 @@ send_command() {
     local command=$1
     local exit_status=$2
     
-    # Generate JSON payload using jq for Ollama API
+    # Generate JSON payload using jq for LLM API
     # shellcheck disable=SC2155
     local json_payload=$(jq -n \
         --arg system "$system_prompt" \
@@ -76,8 +76,8 @@ send_command() {
             ]
         }')
     [ "$DEBUG" ] && echo "$json_payload" >&2
-    # Send the POST request to Ollama API
-    response=$(curl -s ${DEBUG:+"-v"} -X POST "${LLM_URL}" \
+    # Send the POST request to LLM API
+    response=$(curl -s ${DEBUG:+"-v"} -X POST "${OPENAI_API_BASE}" \
         -H "Content-Type: application/json" \
         -H "Authorization: Bearer $OPENAI_API_KEY" \
         -d "$json_payload" | jq -r '.choices[0].message.content')
